@@ -23,10 +23,6 @@ Project Structure
 cyberbasic-ide/
 
 main.py is the main controller and application entry point.
-ide_ui.py contains UI layout and components.
-highlighter.py implements the syntax highlighting engine.
-cyberbasic_config.py stores keywords, themes, and configuration.
-CB2IDE.exe is the required CyberBasic runtime.
 
 Requirements
 
