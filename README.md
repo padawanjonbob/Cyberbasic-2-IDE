@@ -24,15 +24,13 @@ main.py is the main controller and application entry point.
 ide_ui.py contains UI layout and components.
 highlighter.py implements the syntax highlighting engine.
 cyberbasic_config.py stores keywords, themes, and configuration.
-cyberbasic.exe is the required CyberBasic runtime.
+CB2IDE.exe is the required CyberBasic runtime.
 
 Requirements
 
 Python version 3.8 or higher is required.
 
 The application is designed for Windows and uses pywinstyles for native styling.
-
-The CyberBasic runtime executable cyberbasic.exe must be present.
 
 Installation
 
@@ -44,7 +42,7 @@ Change into the project directory:
 
 cd cyberbasic-ide
 
-Install dependencies:
+Install dependencies: (if running py file not exe)
 
 pip install pywinstyles
 
