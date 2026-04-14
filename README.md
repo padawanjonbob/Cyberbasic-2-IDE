@@ -1,4 +1,4 @@
-CyberBasic 2 IDE
+CyberBasic 2 IDE - Not Official
 
 CyberBasic 2 IDE is a lightweight development environment built with Tkinter for the CyberBasic 2 programming language. It provides a dark-themed interface, syntax highlighting, file navigation, and the ability to run CyberBasic programs directly within the editor.
 
