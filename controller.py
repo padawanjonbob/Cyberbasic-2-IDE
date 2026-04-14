@@ -1,4 +1,5 @@
 import tkinter as tk
+import os
 import pywinstyles
 
 from ide_ui import CyberUI
@@ -6,6 +7,7 @@ from highlighter import CyberHighlighter
 from file_manager import FileManager
 from runner import Runner
 from editor_features import EditorFeatures
+from docs_engine import DocsEngine
 
 from cyberbasic_config import THEMES, FONT_FAMILY, FONT_SIZE
 
@@ -30,9 +32,23 @@ class CyberController:
         self.editor_features = EditorFeatures(self)
 
         # =========================
-        # UI
+        # 🔥 CREATE DOCS FIRST
+        # =========================
+        self.docs = DocsEngine(self)
+
+        # =========================
+        # UI (NOW SAFE)
         # =========================
         self.ui = CyberUI(self.root, self)
+
+        # =========================
+        # CONNECT DOCS TO UI
+        # =========================
+        self.docs.attach_ui(self.ui)
+
+        docs_path = "docs"
+        if os.path.exists(docs_path):
+            self.docs.load_folder(docs_path)
 
         # =========================
         # HIGHLIGHTER
@@ -43,7 +59,9 @@ class CyberController:
 
         self.root.mainloop()
 
+    # =========================
     # FILES
+    # =========================
     def new_file(self):
         self.ui.editor.delete("1.0", "end")
         self.file_path = None
@@ -54,11 +72,15 @@ class CyberController:
     def save_file(self):
         self.files.save_file()
 
+    # =========================
     # RUN
+    # =========================
     def run_code(self):
         self.runner.run_code()
 
+    # =========================
     # THEMES
+    # =========================
     def change_theme(self, name):
         theme = THEMES[name]
 
@@ -72,7 +94,9 @@ class CyberController:
         self.highlighter.highlight_all()
         self.ui.line_nums.redraw()
 
+    # =========================
     # FONT SYSTEM
+    # =========================
     def change_font(self, size):
         self.font_size = size
         font = (self.font_family, self.font_size)
@@ -85,6 +109,8 @@ class CyberController:
 
         self.ui.line_nums.redraw()
 
+    # =========================
     # COLOR EDITOR
+    # =========================
     def open_color_editor(self):
         self.ui.open_color_editor()
