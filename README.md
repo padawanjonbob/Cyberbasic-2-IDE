@@ -2,6 +2,8 @@ CyberBasic 2 IDE - Not Official
 
 CyberBasic 2 IDE is a lightweight development environment built with Tkinter for the CyberBasic 2 programming language. It provides a dark-themed interface, syntax highlighting, file navigation, and the ability to run CyberBasic programs directly within the editor.
 
+CB2IDE.exe must be in the same floder as cyberbasic.exe - If cyberbasic does not run after install, rename cyberbasic file with .exe extension.
+
 Features
 
 Syntax highlighting for keywords, functions, strings, and comments is supported with real-time updates.
