@@ -1,3 +1,5 @@
+# cyberbasic IDE
+# main.py
 import tkinter as tk
 from tkinter import filedialog, ttk, colorchooser
 import os, threading, subprocess
@@ -21,13 +23,15 @@ class CyberController:
         self.highlighter = CyberHighlighter(self.ui.editor)
 
         self.file_path = None
+        self.proc = None
+        self.current_dir = os.getcwd()
 
         # Highlight visuals
         self.ui.editor.tag_configure("current_line", background="#2a2d2e")
         self.ui.editor.tag_configure("current_word", background="#3a3d3e")
 
         # Events
-        self.ui.editor.bind("<<Modified>>", self.on_change)
+        self.ui.editor.bind("<KeyRelease>", self.on_change)
         self.ui.editor.bind("<KeyRelease>", self.update_cursor_ui)
         self.ui.editor.bind("<ButtonRelease>", self.update_cursor_ui)
         self.ui.editor.bind("<MouseWheel>", lambda e: self.ui.line_nums.redraw())
@@ -36,6 +40,7 @@ class CyberController:
         self.root.bind("<F5>", lambda e: self.run_code())
 
         self.ui.sidebar.bind("<<TreeviewSelect>>", self.on_file_select)
+        self.ui.sidebar.bind("<<TreeviewOpen>>", self.on_folder_expand)
 
         self.update_sidebar()
         self.highlight_current_line()
@@ -45,6 +50,60 @@ class CyberController:
     def setup_styles(self):
         style = ttk.Style()
         style.theme_use("clam")
+
+    # =========================
+    # FILE TREE (FIXED)
+    # =========================
+    def update_sidebar(self):
+        self.ui.sidebar.delete(*self.ui.sidebar.get_children())
+
+        root_path = self.current_dir
+        root_node = self.ui.sidebar.insert(
+            "", "end",
+            text=root_path,
+            open=True,
+            values=(root_path,)
+        )
+
+        self.insert_tree(root_node, root_path)
+
+    def insert_tree(self, parent, path):
+        try:
+            for item in sorted(os.listdir(path)):
+                full_path = os.path.join(path, item)
+
+                node = self.ui.sidebar.insert(
+                    parent,
+                    "end",
+                    text=item,
+                    values=(full_path,)
+                )
+
+                if os.path.isdir(full_path):
+                    # placeholder so it can expand
+                    self.ui.sidebar.insert(node, "end")
+
+        except PermissionError:
+            pass
+
+    def on_folder_expand(self, event):
+        node = self.ui.sidebar.focus()
+        values = self.ui.sidebar.item(node, "values")
+
+        if not values:
+            return
+
+        path = values[0]
+
+        if not os.path.isdir(path):
+            return
+
+        children = self.ui.sidebar.get_children(node)
+
+        # if only placeholder exists → replace it
+        if len(children) == 1:
+            self.ui.sidebar.delete(children[0])
+            self.insert_tree(node, path)
 
     # =========================
     # FILES
@@ -57,33 +116,39 @@ class CyberController:
     def open_folder(self):
         folder = filedialog.askdirectory()
         if folder:
-            os.chdir(folder)
+            self.current_dir = folder
             self.update_sidebar()
-
-    def update_sidebar(self):
-        self.ui.sidebar.delete(*self.ui.sidebar.get_children())
-
-        for file in os.listdir():
-            path = os.path.abspath(file)
-            self.ui.sidebar.insert("", "end", text=file, values=(path,))
 
     def on_file_select(self, event):
         selection = self.ui.sidebar.selection()
         if not selection:
             return
 
-        values = self.ui.sidebar.item(selection, "values")
-        if values:
-            self.file_path = values[0]
+        node = selection[0]
+        values = self.ui.sidebar.item(node, "values")
 
-            if os.path.isfile(self.file_path):
-                with open(self.file_path, "r", encoding="utf-8") as f:
-                    self.ui.editor.delete("1.0", tk.END)
-                    self.ui.editor.insert(tk.END, f.read())
+        if not values:
+            return
 
-                total = int(self.ui.editor.index("end-1c").split(".")[0])
-                for i in range(1, total + 1):
-                    self.highlighter.apply_line(i)
+        path = values[0]
+
+        if os.path.isdir(path):
+            return  # don't open folders
+
+        self.file_path = path
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                self.ui.editor.delete("1.0", tk.END)
+                self.ui.editor.insert(tk.END, f.read())
+        except Exception as e:
+            print("Error opening file:", e)
+            return
+
+        # Highlight file
+        total = int(self.ui.editor.index("end-1c").split(".")[0])
+        for i in range(1, total + 1):
+            self.highlighter.apply_line(i)
 
     def save_file(self):
         if not self.file_path:
@@ -99,6 +164,13 @@ class CyberController:
     def run_code(self):
         self.save_file()
 
+        # kill previous process
+        if self.proc:
+            try:
+                self.proc.terminate()
+            except:
+                pass
+
         # clear console
         self.ui.console.config(state='normal')
         self.ui.console.delete("1.0", "end")
@@ -108,19 +180,20 @@ class CyberController:
             threading.Thread(target=self.execute, daemon=True).start()
 
     def execute(self):
-        proc = subprocess.Popen(
+        self.proc = subprocess.Popen(
             [CYBERBASIC_PATH, self.file_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True
         )
 
-        for line in proc.stdout:
+        for line in self.proc.stdout:
             self.root.after(0, self.log, line.strip())
 
     def log(self, msg):
         self.ui.console.config(state='normal')
         self.ui.console.insert("end", msg + "\n")
+        self.ui.console.see("end")
         self.ui.console.config(state='disabled')
 
     # =========================
@@ -203,7 +276,7 @@ class CyberController:
 
         start = "1.0"
         while True:
-            pos = self.ui.editor.search(rf'\y{word}\y', start, stopindex=tk.END, regexp=True)
+            pos = self.ui.editor.search(rf'\m{word}\M', start, stopindex=tk.END, regexp=True)
             if not pos:
                 break
 
@@ -215,10 +288,8 @@ class CyberController:
     # EDIT EVENTS
     # =========================
     def on_change(self, event=None):
-        if self.ui.editor.edit_modified():
-            line = self.ui.editor.index("insert").split(".")[0]
-            self.highlighter.apply_line(line)
-            self.ui.editor.edit_modified(False)
+        line = self.ui.editor.index("insert").split(".")[0]
+        self.highlighter.apply_line(line)
 
 
 if __name__ == "__main__":
