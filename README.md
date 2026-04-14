@@ -6,7 +6,7 @@ Features
 
 Syntax highlighting for keywords, functions, strings, and comments is supported with real-time updates.
 
-A project explorer sidebar allows opening folders and navigating files.
+A project explorer sidebar allows opening folders and navigating files. 
 
 An integrated console displays program output when running CyberBasic code.
 
