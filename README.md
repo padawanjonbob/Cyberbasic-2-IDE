@@ -38,7 +38,7 @@ Installation
 
 Clone the repository using:
 
-git clone https://github.com/padawanjonbob/cyberbasic-2-IDE.git
+git clone https://github.com/padawanjonbob/Cyberbasic-2-IDE.git
 
 Change into the project directory:
 
